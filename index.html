@@ -17,7 +17,7 @@
     --payee: #e39a4f !important;
   }
   html, body { background: #000000 !important; }
-  }
+
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #141820;
@@ -74,7 +74,6 @@
   .tag-pending { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
   .tag-payee { background: color-mix(in srgb, var(--payee) 18%, transparent); color: var(--payee); }
   .note { color: var(--muted); font-size: 0.82rem; margin-top: 12px; }
-  .progress-ring-wrap { display: flex; align-items: center; gap: 18px; }
 </style>
 </head>
 <body>
@@ -99,14 +98,14 @@
       <div class="stat-note">Sent to payee every month</div>
     </div>
     <div class="card">
-        <div class="stat-value" id="gtDone">-</div>
+      <div class="stat-label">Get-togethers completed</div>
+      <div class="stat-value" id="gtDone">-</div>
       <div class="stat-note" id="gtNote">-</div>
     </div>
     <div class="card">
       <div class="stat-label">Total collected</div>
       <div class="stat-value" id="totalCollected">-</div>
       <div class="stat-note">Based on get-togethers held</div>
-    </div>
     </div>
   </div>
 
@@ -149,9 +148,8 @@
 
 <script>
   // ---- DATA: edit here to update the dashboard ----
-  const CONTRIBUTION_PER_MONTH = 1000;          // INR per member per month
-  const AMOUNT_PER_GET_TOGETHER = 7000;   // INR collected per get-together rotation
-  const PAYEE = "Pandare";                       // receives the monthly pool
+  const CONTRIBUTION_PER_MONTH = 1000;   // INR per member per month
+  const PAYEE = "Pandare";               // receives the monthly pool
   const MEMBERS = [
     "Kulkarni", "Upasani", "Katekar", "Pandare", "Medhi", "Marane", "Gogate"
   ];
@@ -168,15 +166,15 @@
   const hosted = new Set(GET_TOGETHERS.map(g => g.host));
   const hostedCount = hosted.size;
   const pool = CONTRIBUTION_PER_MONTH * total;
+  const AMOUNT_PER_GET_TOGETHER = pool;  // one rotation collects one month's pool
+  const totalCollected = GET_TOGETHERS.length * AMOUNT_PER_GET_TOGETHER;
   const sharePct = (CONTRIBUTION_PER_MONTH / pool * 100).toFixed(1);
 
   document.getElementById("memberCount").textContent = total;
   document.getElementById("perMember").textContent = fmt(CONTRIBUTION_PER_MONTH);
   document.getElementById("monthlyPool").textContent = fmt(pool);
   document.getElementById("gtDone").textContent = `${GET_TOGETHERS.length} of ${total}`;
-  document.getElementById("gtNote").textContent =
-    `${total - hostedCount} members yet to host`;
-    const totalCollected = GET_TOGETHERS.length * AMOUNT_PER_GET_TOGETHER;
+  document.getElementById("gtNote").textContent = `${total - hostedCount} members yet to host`;
   document.getElementById("totalCollected").textContent = fmt(totalCollected);
 
   // Hosting rotation bars: one bar per member, full if hosted
@@ -192,7 +190,7 @@
     hostBars.appendChild(row);
   });
 
-  // Contribution bars: equal share per member, scaled to the largest value
+  // Contribution bars: equal share per member
   const contribBars = document.getElementById("contribBars");
   MEMBERS.forEach(name => {
     const isPayee = name === PAYEE;
