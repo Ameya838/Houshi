@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monthly Contribution Group: Statistics</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --surface: #ffffff;
+    --text: #1d2433;
+    --muted: #6b7385;
+    --border: #e3e6ef;
+    --accent: #3b6fd8;
+    --done: #2e9e6a;
+    --pending: #c7ccd9;
+    --payee: #d9822b;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141820;
+      --surface: #1d2330;
+      --text: #e8ebf3;
+      --muted: #9aa3b8;
+      --border: #2c3445;
+      --accent: #6b93ec;
+      --done: #3cb97f;
+      --pending: #3a4256;
+      --payee: #e39a4f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141820;
+    --surface: #1d2330;
+    --text: #e8ebf3;
+    --muted: #9aa3b8;
+    --border: #2c3445;
+    --accent: #6b93ec;
+    --done: #3cb97f;
+    --pending: #3a4256;
+    --payee: #e39a4f;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { padding: env(safe-area-inset-top, 0px) 16px env(safe-area-inset-bottom, 0px); }
+  main { max-width: 960px; margin: 0 auto; padding: 24px 0 40px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 0.95rem; }
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+  .stat-label { color: var(--muted); font-size: 0.85rem; }
+  .stat-value { font-size: 1.7rem; font-weight: 700; margin-top: 4px; }
+  .stat-note { color: var(--muted); font-size: 0.8rem; margin-top: 4px; }
+  .section { margin-top: 16px; }
+  .bar-row { display: grid; grid-template-columns: 110px 1fr 48px; align-items: center; gap: 10px; margin: 10px 0; }
+  .bar-track { background: var(--border); border-radius: 6px; height: 14px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 6px; background: var(--accent); }
+  .bar-val { text-align: right; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 0.8rem; color: var(--muted); margin-top: 8px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  th { color: var(--muted); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.03em; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; }
+  .tag-done { background: color-mix(in srgb, var(--done) 18%, transparent); color: var(--done); }
+  .tag-pending { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
+  .tag-payee { background: color-mix(in srgb, var(--payee) 18%, transparent); color: var(--payee); }
+  .note { color: var(--muted); font-size: 0.82rem; margin-top: 12px; }
+  .progress-ring-wrap { display: flex; align-items: center; gap: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Monthly Contribution Group</h1>
+  <p class="sub">Contribution pool, payee, and get-together progress</p>
+
+  <div class="grid">
+    <div class="card">
+      <div class="stat-label">Members contributing</div>
+      <div class="stat-value" id="memberCount">-</div>
+      <div class="stat-note">Each contributes monthly</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Monthly contribution per member</div>
+      <div class="stat-value" id="perMember">-</div>
+      <div class="stat-note">Indian Rupees (INR)</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Total monthly pool</div>
+      <div class="stat-value" id="monthlyPool">-</div>
+      <div class="stat-note">Sent to payee every month</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Get-togethers completed</div>
+      <div class="stat-value" id="gtDone">-</div>
+      <div class="stat-note" id="gtNote">-</div>
+    </div>
+  </div>
+
+  <div class="grid section" style="grid-template-columns: 1fr 1fr;">
+    <div class="card">
+      <h2>Get-together hosting rotation</h2>
+      <div id="hostBars"></div>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--done)"></span>Hosted</span>
+        <span><span class="dot" style="background:var(--pending)"></span>Yet to host</span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Contribution breakdown</h2>
+      <div id="contribBars"></div>
+      <p class="note">Each member contributes the same amount. Total pool and per-member share are shown above.</p>
+    </div>
+  </div>
+
+  <div class="card section">
+    <h2>Member status</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Member</th>
+            <th class="num">Monthly (INR)</th>
+            <th>Payee</th>
+            <th>Hosted get-together</th>
+            <th>Share of pool</th>
+          </tr>
+        </thead>
+        <tbody id="memberRows"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <p class="note">Hosting progress is counted against the 7 members. Edit the data block in this file to update the figures.</p>
+</main>
+
+<script>
+  // ---- DATA: edit here to update the dashboard ----
+  const CONTRIBUTION_PER_MONTH = 2000;          // INR per member per month
+  const PAYEE = "Pandare";                       // receives the monthly pool
+  const MEMBERS = [
+    "Kulkarni", "Upasani", "Katekar", "Pandare", "Medhi", "Marane", "Gogate"
+  ];
+  // Get-togethers completed so far, in order
+  const GET_TOGETHERS = [
+    { host: "Upasani", order: 1 },
+    { host: "Gogate",  order: 2 },
+    { host: "Medhi",   order: 3 }
+  ];
+  // ------------------------------------------------
+
+  const fmt = n => "₹" + n.toLocaleString("en-IN");
+  const total = MEMBERS.length;
+  const hosted = new Set(GET_TOGETHERS.map(g => g.host));
+  const hostedCount = hosted.size;
+  const pool = CONTRIBUTION_PER_MONTH * total;
+  const sharePct = (CONTRIBUTION_PER_MONTH / pool * 100).toFixed(1);
+
+  document.getElementById("memberCount").textContent = total;
+  document.getElementById("perMember").textContent = fmt(CONTRIBUTION_PER_MONTH);
+  document.getElementById("monthlyPool").textContent = fmt(pool);
+  document.getElementById("gtDone").textContent = `${GET_TOGETHERS.length} of ${total}`;
+  document.getElementById("gtNote").textContent =
+    `${total - hostedCount} members yet to host`;
+
+  // Hosting rotation bars: one bar per member, full if hosted
+  const hostBars = document.getElementById("hostBars");
+  MEMBERS.forEach(name => {
+    const done = hosted.has(name);
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <span>${name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${done ? 100 : 0}%;background:${done ? "var(--done)" : "var(--pending)"}"></div></div>
+      <span class="bar-val">${done ? "Yes" : "No"}</span>`;
+    hostBars.appendChild(row);
+  });
+
+  // Contribution bars: equal share per member, scaled to the largest value
+  const contribBars = document.getElementById("contribBars");
+  MEMBERS.forEach(name => {
+    const isPayee = name === PAYEE;
+    const row = document.createElement("div");
+    row.className = "bar-row";
+    row.innerHTML = `
+      <span>${name}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:100%;background:${isPayee ? "var(--payee)" : "var(--accent)"}"></div></div>
+      <span class="bar-val">${fmt(CONTRIBUTION_PER_MONTH)}</span>`;
+    contribBars.appendChild(row);
+  });
+
+  // Member status table
+  const tbody = document.getElementById("memberRows");
+  MEMBERS.forEach(name => {
+    const isPayee = name === PAYEE;
+    const gt = GET_TOGETHERS.find(g => g.host === name);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${name}</td>
+      <td class="num">${fmt(CONTRIBUTION_PER_MONTH)}</td>
+      <td>${isPayee ? '<span class="tag tag-payee">Payee</span>' : "-"}</td>
+      <td>${gt ? `<span class="tag tag-done">Yes (#${gt.order})</span>` : '<span class="tag tag-pending">Not yet</span>'}</td>
+      <td>${sharePct}%</td>`;
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>
