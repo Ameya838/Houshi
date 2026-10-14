@@ -99,9 +99,14 @@
       <div class="stat-note">Sent to payee every month</div>
     </div>
     <div class="card">
-      <div class="stat-label">Get-togethers completed</div>
-      <div class="stat-value" id="gtDone">-</div>
+        <div class="stat-value" id="gtDone">-</div>
       <div class="stat-note" id="gtNote">-</div>
+    </div>
+    <div class="card">
+      <div class="stat-label">Total collected</div>
+      <div class="stat-value" id="totalCollected">-</div>
+      <div class="stat-note">Based on get-togethers held</div>
+    </div>
     </div>
   </div>
 
@@ -145,6 +150,7 @@
 <script>
   // ---- DATA: edit here to update the dashboard ----
   const CONTRIBUTION_PER_MONTH = 1000;          // INR per member per month
+  const AMOUNT_PER_GET_TOGETHER = 7000;   // INR collected per get-together rotation
   const PAYEE = "Pandare";                       // receives the monthly pool
   const MEMBERS = [
     "Kulkarni", "Upasani", "Katekar", "Pandare", "Medhi", "Marane", "Gogate"
@@ -170,6 +176,8 @@
   document.getElementById("gtDone").textContent = `${GET_TOGETHERS.length} of ${total}`;
   document.getElementById("gtNote").textContent =
     `${total - hostedCount} members yet to host`;
+    const totalCollected = GET_TOGETHERS.length * AMOUNT_PER_GET_TOGETHER;
+  document.getElementById("totalCollected").textContent = fmt(totalCollected);
 
   // Hosting rotation bars: one bar per member, full if hosted
   const hostBars = document.getElementById("hostBars");
