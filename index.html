@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <h1 style="text-align: center;">Houshi Group</h1>
+.topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.add-btn { background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+  padding: 10px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
+.add-btn:hover { opacity: 0.9; }
 <style>
   :root {
     --bg: #000000 !important;
@@ -78,6 +82,9 @@
 </head>
 <body>
 <main>
+    <div class="topbar">
+    <button id="addGT" class="add-btn">+ Add get-together</button>
+    </div>
   <h1>Monthly Contribution</h1>
   <p class="sub">Contribution pool, payee, and get-together progress</p>
 
@@ -154,69 +161,87 @@
     "Kulkarni", "Upasani", "Katekar", "Pandare", "Medhi", "Marane", "Gogate"
   ];
   // Get-togethers completed so far, in order
-  const GET_TOGETHERS = [
+  const INITIAL_GET_TOGETHERS = [
     { host: "Upasani", order: 1 },
     { host: "Gogate",  order: 2 },
     { host: "Medhi",   order: 3 }
   ];
   // ------------------------------------------------
 
+  let getTogethers = INITIAL_GET_TOGETHERS.map(g => ({ ...g }));
+
   const fmt = n => "₹" + n.toLocaleString("en-IN");
   const total = MEMBERS.length;
-  const hosted = new Set(GET_TOGETHERS.map(g => g.host));
-  const hostedCount = hosted.size;
-  const pool = CONTRIBUTION_PER_MONTH * total;
-  const AMOUNT_PER_GET_TOGETHER = pool;  // one rotation collects one month's pool
-  const totalCollected = GET_TOGETHERS.length * AMOUNT_PER_GET_TOGETHER;
+  const pool = CONTRIBUTION_PER_MONTH * total;   // one rotation collects one month's pool
   const sharePct = (CONTRIBUTION_PER_MONTH / pool * 100).toFixed(1);
 
-  document.getElementById("memberCount").textContent = total;
-  document.getElementById("perMember").textContent = fmt(CONTRIBUTION_PER_MONTH);
-  document.getElementById("monthlyPool").textContent = fmt(pool);
-  document.getElementById("gtDone").textContent = `${GET_TOGETHERS.length} of ${total}`;
-  document.getElementById("gtNote").textContent = `${total - hostedCount} members yet to host`;
-  document.getElementById("totalCollected").textContent = fmt(totalCollected);
+  function render() {
+    const hosted = new Set(getTogethers.map(g => g.host));
+    const hostedCount = hosted.size;
+    const totalCollected = getTogethers.length * pool;
 
-  // Hosting rotation bars: one bar per member, full if hosted
-  const hostBars = document.getElementById("hostBars");
-  MEMBERS.forEach(name => {
-    const done = hosted.has(name);
-    const row = document.createElement("div");
-    row.className = "bar-row";
-    row.innerHTML = `
-      <span>${name}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:${done ? 100 : 0}%;background:${done ? "var(--done)" : "var(--pending)"}"></div></div>
-      <span class="bar-val">${done ? "Yes" : "No"}</span>`;
-    hostBars.appendChild(row);
+    document.getElementById("memberCount").textContent = total;
+    document.getElementById("perMember").textContent = fmt(CONTRIBUTION_PER_MONTH);
+    document.getElementById("monthlyPool").textContent = fmt(pool);
+    document.getElementById("gtDone").textContent = `${getTogethers.length} of ${total}`;
+    document.getElementById("gtNote").textContent = `${total - hostedCount} members yet to host`;
+    document.getElementById("totalCollected").textContent = fmt(totalCollected);
+
+    // Hosting rotation bars
+    const hostBars = document.getElementById("hostBars");
+    hostBars.innerHTML = "";
+    MEMBERS.forEach(name => {
+      const done = hosted.has(name);
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `
+        <span>${name}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${done ? 100 : 0}%;background:${done ? "var(--done)" : "var(--pending)"}"></div></div>
+        <span class="bar-val">${done ? "Yes" : "No"}</span>`;
+      hostBars.appendChild(row);
+    });
+
+    // Contribution bars
+    const contribBars = document.getElementById("contribBars");
+    contribBars.innerHTML = "";
+    MEMBERS.forEach(name => {
+      const isPayee = name === PAYEE;
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `
+        <span>${name}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:${isPayee ? "var(--payee)" : "var(--accent)"}"></div></div>
+        <span class="bar-val">${fmt(CONTRIBUTION_PER_MONTH)}</span>`;
+      contribBars.appendChild(row);
+    });
+
+    // Member status table
+    const tbody = document.getElementById("memberRows");
+    tbody.innerHTML = "";
+    MEMBERS.forEach(name => {
+      const isPayee = name === PAYEE;
+      const gt = getTogethers.find(g => g.host === name);
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${name}</td>
+        <td class="num">${fmt(CONTRIBUTION_PER_MONTH)}</td>
+        <td>${isPayee ? '<span class="tag tag-payee">Payee</span>' : "-"}</td>
+        <td>${gt ? `<span class="tag tag-done">Yes (#${gt.order})</span>` : '<span class="tag tag-pending">Not yet</span>'}</td>
+        <td>${sharePct}%</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // Button: adds the next member who has not hosted yet
+  document.getElementById("addGT").addEventListener("click", () => {
+    const hosted = new Set(getTogethers.map(g => g.host));
+    const next = MEMBERS.find(m => !hosted.has(m));
+    if (!next) return;   // everyone has hosted
+    getTogethers.push({ host: next, order: getTogethers.length + 1 });
+    render();
   });
 
-  // Contribution bars: equal share per member
-  const contribBars = document.getElementById("contribBars");
-  MEMBERS.forEach(name => {
-    const isPayee = name === PAYEE;
-    const row = document.createElement("div");
-    row.className = "bar-row";
-    row.innerHTML = `
-      <span>${name}</span>
-      <div class="bar-track"><div class="bar-fill" style="width:100%;background:${isPayee ? "var(--payee)" : "var(--accent)"}"></div></div>
-      <span class="bar-val">${fmt(CONTRIBUTION_PER_MONTH)}</span>`;
-    contribBars.appendChild(row);
-  });
-
-  // Member status table
-  const tbody = document.getElementById("memberRows");
-  MEMBERS.forEach(name => {
-    const isPayee = name === PAYEE;
-    const gt = GET_TOGETHERS.find(g => g.host === name);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${name}</td>
-      <td class="num">${fmt(CONTRIBUTION_PER_MONTH)}</td>
-      <td>${isPayee ? '<span class="tag tag-payee">Payee</span>' : "-"}</td>
-      <td>${gt ? `<span class="tag tag-done">Yes (#${gt.order})</span>` : '<span class="tag tag-pending">Not yet</span>'}</td>
-      <td>${sharePct}%</td>`;
-    tbody.appendChild(tr);
-  });
+  render();
 </script>
 </body>
 </html>
