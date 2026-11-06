@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <h1 style="text-align: center;">Houshi Group</h1>
 <style>
-    .topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-  .add-btn { background: var(--accent); color: #ffffff; border: none; border-radius: 8px;
+  /* <!--  .topbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .add-btn { background: var(--accent); color: #ffffff; border: none; border-radius: 8px; --> */
     padding: 10px 16px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
   .add-btn:hover { opacity: 0.9; }
   :root {
@@ -87,9 +87,6 @@ padding: 3px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
 </head>
 <body>
 <main>
-    <div class="topbar">
-    <button id="addGT" class="add-btn">+ Add get-together</button>
-    </div>
   <h1>Monthly Contribution</h1>
   <p class="sub">Contribution pool, payee, and get-together progress</p>
 
@@ -242,15 +239,6 @@ padding: 3px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
       tbody.appendChild(tr);
     });
   }
-
-  // Button: adds the next member who has not hosted yet
-  document.getElementById("addGT").addEventListener("click", () => {
-    const hosted = new Set(getTogethers.map(g => g.host));
-    const next = MEMBERS.find(m => !hosted.has(m));
-    if (!next) return;   // everyone has hosted
-    getTogethers.push({ host: next, order: getTogethers.length + 1 });
-    render();
-  });
       // Hosting rotation: clicking "Mark" records that member as hosted
   document.getElementById("hostBars").addEventListener("click", e => {
     const btn = e.target.closest(".mark-btn");
