@@ -78,6 +78,11 @@
   .tag-pending { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
   .tag-payee { background: color-mix(in srgb, var(--payee) 18%, transparent); color: var(--payee); }
   .note { color: var(--muted); font-size: 0.82rem; margin-top: 12px; }
+.bar-row { grid-template-columns: 150px 1fr 48px; }
+.name-cell { display: flex; align-items: center; gap: 8px; }
+.mark-btn { background: var(--accent); color: #ffffff; border: none; border-radius: 6px;
+padding: 3px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
+.mark-btn:hover { opacity: 0.9; }
 </style>
 </head>
 <body>
@@ -189,15 +194,20 @@
     document.getElementById("totalCollected").textContent = fmt(totalCollected);
 
     // Hosting rotation bars
+        // Hosting rotation bars
     const hostBars = document.getElementById("hostBars");
     hostBars.innerHTML = "";
     MEMBERS.forEach(name => {
       const done = hosted.has(name);
+      const highlight = done || name === PAYEE;   // Pandare is always shown green
       const row = document.createElement("div");
       row.className = "bar-row";
       row.innerHTML = `
-        <span>${name}</span>
-        <div class="bar-track"><div class="bar-fill" style="width:${done ? 100 : 0}%;background:${done ? "var(--done)" : "var(--pending)"}"></div></div>
+        <span class="name-cell">
+          ${done ? "" : `<button class="mark-btn" data-name="${name}">Mark</button>`}
+          <span>${name}</span>
+        </span>
+        <div class="bar-track"><div class="bar-fill" style="width:${highlight ? 100 : 0}%;background:${highlight ? "var(--done)" : "var(--pending)"}"></div></div>
         <span class="bar-val">${done ? "Yes" : "No"}</span>`;
       hostBars.appendChild(row);
     });
@@ -241,7 +251,15 @@
     getTogethers.push({ host: next, order: getTogethers.length + 1 });
     render();
   });
-
+      // Hosting rotation: clicking "Mark" records that member as hosted
+  document.getElementById("hostBars").addEventListener("click", e => {
+    const btn = e.target.closest(".mark-btn");
+    if (!btn) return;
+    const name = btn.dataset.name;
+    if (getTogethers.some(g => g.host === name)) return;
+    getTogethers.push({ host: name, order: getTogethers.length + 1 });
+    render();
+  });
   render();
 </script>
 </body>
